@@ -1,7 +1,7 @@
 # NoxSDK
 Detects 3D objects from uploaded 3D models
 
-**Note**: Requires ARCore/ARkit support for smart phones or 6Dof tracking for wearables
+**Note**: Requires ARCore/ARkit support for smart phones or 6DoF tracking for wearables
 
 ## Steps to add Nox SDK to existing project
 - Import [NoxSDK.unitypackage](https://github.com/iboson-io/NoxSDK-Example-Unity3D/releases)
