@@ -7,6 +7,8 @@ Detects 3D objects from uploaded 3D models
 - Import [NoxSDK.unitypackage](https://github.com/iboson-io/NoxSDK-Example-Unity3D/releases)
 - Add ObjectDetection.prefab to the scene with ARFoundation or Snapdragon Spaces that does the 6DoF tracking
 - Fill in MODEL_ID and TOKEN from [noxvision.ai](https://noxvision.ai/)
+- Add Unity Analytics from package manager
+- Add package by name option in package manager and enter ```com.unity.cloud.gltfast``` if you want to add glb models
 
 ### Android and iOS
 - Add AR Foundation, ARKit and ARCore XR plugins from package manager
