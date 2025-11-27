@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using TMPro;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
@@ -16,16 +17,14 @@ public class NoxObjectDetection : MonoBehaviour
     private UnityEngine.Camera arCamera;
     public GameObject detectedParentObject;
     [SerializeField]
-    private string MODEL_ID = ""; //Enter MODEL_ID from https://noxvision.ai/
+    public string MODEL_ID = ""; //Enter MODEL_ID from https://noxvision.ai/
     [SerializeField]
-    private string API_KEY = ""; //Enter API_KEY from https://noxvision.ai/
+    public string API_KEY = ""; //Enter API_KEY from https://noxvision.ai/
     public TMP_Text statusText;
+    public Button scanButton;
     private bool intrinsicsUpdated = false;
     private XRCpuImage lastCpuImage;
     private XRCameraIntrinsics intrinsics;
-
-    // Timestamp and throttling
-    private long lastTimestampUsed = 0;
 
 
     private void OnEnable()
@@ -53,42 +52,34 @@ public class NoxObjectDetection : MonoBehaviour
             Debug.LogError("Enter API_KEY and MODEL_ID"); //Get API_KEY & MODEL_ID from https://noxvision.ai/
         }
         ObjectDetectionInitAsync();
+
+        detectedParentObject.SetActive(false);
+        scanButton.onClick.AddListener(StartScan);
     }
 
     private void OnCameraFrameReceived(ARCameraFrameEventArgs args)
     {
         //Debug.Log("OnCameraFrameReceived");
-        if (objectDetection.isDetected)
+        if (!objectDetection.isScanning)
         {
             return;
         }
-        if (!objectDetection.isConnected)
+        if(objectDetection.isProcessing)
         {
             return;
         }
 
-        // Get current timestamp (in microseconds to match Java code)
-        long currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000;
-        long timeDiff = (currentTimestamp - lastTimestampUsed) / 1000; // Convert to milliseconds
-
-        // Throttle: only process if more than 1000ms (1 second) has passed
-        if (timeDiff > 1000)
+        lastCpuImage = new XRCpuImage();
+        if (!cameraManager.TryAcquireLatestCpuImage(out lastCpuImage))
         {
-            lastTimestampUsed = currentTimestamp;
-
-            lastCpuImage = new XRCpuImage();
-            if (!cameraManager.TryAcquireLatestCpuImage(out lastCpuImage))
-            {
-                return;
-            }
-            if (!intrinsicsUpdated)
-            {
-                UpdateCameraIntrinsics();
-            }
-
-            objectDetection.UpdateCameraFrame(lastCpuImage, arCamera.transform.GetWorldPose());
+            return;
+        }
+        if (!intrinsicsUpdated)
+        {
+            UpdateCameraIntrinsics();
         }
 
+        objectDetection.UpdateCameraFrame(lastCpuImage, arCamera.transform.GetWorldPose());
         lastCpuImage.Dispose();
     }
 
@@ -110,26 +101,37 @@ public class NoxObjectDetection : MonoBehaviour
         objectDetection = new ObjectDetection();
         objectDetection.OnInitialized += OnInitialized;
         objectDetection.OnFailed += OnFailed;
-        objectDetection.OnDetectionStatus += OnDetectionStatus;
-        objectDetection.OnObjectTransformationUpdated += OnObjectTransformationUpdated;
+        objectDetection.OnDetected += OnDetected;
         await objectDetection.InitAsync();
+    }
+
+    public void StartScan()
+    {
+        if (objectDetection.isProcessing)
+            return;
+
+        statusText.text = "Scanning...";
+        objectDetection.StartScan();
+        scanButton.interactable = false;
     }
 
     private void OnInitialized()
     {
         Debug.Log("ObjectDetection init");
         objectDetection.SetConfig(MODEL_ID, API_KEY);
-        objectDetection.StartScan();
     }
 
     private void OnFailed(string error)
     {
-        Debug.Log("ObjectDetection failed "+error);
-        statusText.text = "Failed : "+error;
+        Debug.Log(error);
+        statusText.text = error;
+        scanButton.interactable = true;
     }
 
-    private void OnObjectTransformationUpdated(float[] transformation)
+    private void OnDetected(float[] transformation)
     {
+        statusText.text = "Detected";
+        scanButton.interactable = true;
         // Create Matrix4x4 from array (ARCore format)
         Matrix4x4 transformationMatrix = new Matrix4x4();
         for (int i = 0; i < 4; i++)
@@ -152,11 +154,7 @@ public class NoxObjectDetection : MonoBehaviour
 
         detectedParentObject.transform.position = detectedPosition;
         detectedParentObject.transform.rotation = detectedRotation;
-    }
-    private void OnDetectionStatus(string status)
-    {
-        Debug.Log("Plugin status " + status);
-        statusText.text = status;
+        detectedParentObject.SetActive(true);
     }
 
     // Update is called once per frame
