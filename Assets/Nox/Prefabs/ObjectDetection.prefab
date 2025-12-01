@@ -45,5 +45,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraManager: {fileID: 0}
-  debugText: {fileID: 0}
   detectedParentObject: {fileID: 0}
+  MODEL_ID: 
+  API_KEY: 
+  statusText: {fileID: 0}
+  scanButton: {fileID: 0}
+  showPreview3D: 1
