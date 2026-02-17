@@ -193,8 +193,8 @@ public class NoxObjectDetection : MonoBehaviour
         }
         GameObject obj = glbLoader.transform.GetChild(0).gameObject;
         GameObject preview3D = Instantiate(obj, detectedParentObject.transform);
-        obj.transform.localPosition = Vector3.zero;
-        obj.transform.localRotation = Quaternion.identity;
+        preview3D.transform.localPosition = obj.transform.localPosition;
+        preview3D.transform.localRotation = Quaternion.identity;
         
         StartCoroutine(FadeInFadeOut(preview3D));
     }
