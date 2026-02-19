@@ -1,6 +1,7 @@
 using NoxSDK;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.XR.CoreUtils;
@@ -31,6 +32,7 @@ public class NoxObjectDetection : MonoBehaviour
     private bool intrinsicsUpdated = false;
     private XRCpuImage lastCpuImage;
     private XRCameraIntrinsics intrinsics;
+    private ARAnchor currentAnchor;
 
 
     private void OnEnable()
@@ -176,7 +178,23 @@ public class NoxObjectDetection : MonoBehaviour
         detectedParentObject.transform.position = detectedPosition;
         detectedParentObject.transform.rotation = detectedRotation;
         detectedParentObject.SetActive(true);
-        
+
+        // Add ARAnchor component
+        if(currentAnchor != null)
+        {
+            Destroy(currentAnchor);
+        }
+        ARAnchor anchor = detectedParentObject.AddComponent<ARAnchor>();
+        if (anchor != null)
+        {
+            Debug.Log("ARAnchor created at Detected position");
+            currentAnchor = anchor;
+        }
+        else
+        {
+            Debug.LogError("Failed to create ARAnchor - ARAnchorManager should be in scene");
+        }
+
         ShowDetectionOverlay();
     }
 
